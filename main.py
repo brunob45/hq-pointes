@@ -98,8 +98,8 @@ def get_hq_events():
 def create_ha_event(url: str, headers: dict, data: dict):
   ''' create a new event in Home Assistant '''
   # https://www.home-assistant.io/integrations/calendar/#service-calendarcreate_event
-  url = f"{url}/api/services/calendars/create_event"
-  response = requests.get(url, headers=headers, json=data)
+  url = f"{url}/api/services/calendar/create_event"
+  response = requests.post(url, headers=headers, json=data)
   print(response.text)
 
 

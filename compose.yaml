@@ -1,0 +1,7 @@
+services:
+  hq-pointes:
+    image: hq-pointes:latest
+    container_name: hq-pointes
+    build: hq-pointes
+    restart: unless-stopped
+    env_file: .env

@@ -60,12 +60,16 @@ def get_ha_events(url: str, headers: dict):
   start = start.isoformat(timespec='seconds')
   end = end.isoformat(timespec='seconds')
 
+  # https://developers.home-assistant.io/docs/api/rest
   url = f"{url}/api/calendars/calendar.hq_flex_d?start={start}Z&end={end}Z"
   print(url)
   response = requests.get(url, headers=headers)
 
-  if not response.text:
-    return []
+  if response.status_code != 200:
+    print(f'request to HA failed with status {response.status_code}')
+    return None  # request failed
+  elif not response.text:
+    return []  # request succeeded but empty
 
   results = json.loads(response.text)
   events = [Event().from_ha(x) for x in results]
@@ -79,8 +83,11 @@ def get_hq_events():
   url = "https://donnees.hydroquebec.com/api/explore/v2.1/catalog/datasets/evenements-pointe/records?where=offre%3D%22CPC-D%22&order_by=datedebut%20desc&limit=20"
   response = requests.get(url)
 
+  if response.status_code != 200:
+    print(f'request to HQ failed with status {response.status_code}')
+    return None  # request failed
   if not response.text:
-    return []
+    return []  # request succeeded but empty
 
   results = json.loads(response.text)["results"]
   events = [Event().from_hq(x) for x in results]
@@ -99,8 +106,12 @@ def create_ha_event(url: str, headers: dict, data: dict):
 def compare_events(url: str, headers: dict):
   NOW = datetime.now(tz=tz.tzlocal())
 
+  # fetch both event lists
   events_ha = get_ha_events(HA_URL, HEADERS)
   events_hq = get_hq_events()
+
+  if (events_ha is None) or (events_hq is None):
+    return  # early return, request failed
 
   # for all Hydro-Quebec events
   for event in events_hq:
@@ -124,7 +135,7 @@ if __name__ == '__main__':
     "content-type": "application/json",
   }
 
-  while True:
+  while True:  # main loop
     compare_events(HA_URL, HEADERS)
     sleep(3600) # 1 hours in seconds
 
